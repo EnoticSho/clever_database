@@ -1,9 +1,9 @@
 --1
-SELECT ad.aircraft_code, ad.model, ad."range", s.fare_conditions, count(s.seat_no)
+SELECT ad.aircraft_code, ad.model, ad.range, s.fare_conditions, count(s.seat_no)
 FROM aircrafts_data ad
          JOIN seats s
               ON ad.aircraft_code = s.aircraft_code
-GROUP BY ad.aircraft_code, ad.model, ad."range", s.fare_conditions;
+GROUP BY ad.aircraft_code, ad.model, ad.range, s.fare_conditions;
 
 --2
 SELECT ad.model, count(s.seat_no) AS count
@@ -33,19 +33,22 @@ LIMIT 10;
 --5
 SELECT *
 FROM flights f
-         LEFT JOIN ticket_flights tf ON f.flight_id = tf.flight_id AND tf.fare_conditions = 'Business'
+         LEFT JOIN ticket_flights tf
+                   ON f.flight_id = tf.flight_id AND tf.fare_conditions = 'Business'
 WHERE tf.ticket_no IS NULL;
 
 --6
 SELECT DISTINCT ad.airport_name, ad.city
 FROM airports_data ad
-         JOIN flights f ON f.departure_airport = ad.airport_code
+         JOIN flights f
+              ON f.departure_airport = ad.airport_code
 WHERE f.status = 'Delayed';
 
 --7
 SELECT ad.airport_name, COUNT(f.flight_id) AS flights_count
 FROM airports_data ad
-         JOIN flights f ON f.departure_airport = ad.airport_code
+         JOIN flights f
+              ON f.departure_airport = ad.airport_code
 GROUP BY ad.airport_name
 ORDER BY flights_count DESC;
 
@@ -85,21 +88,26 @@ FROM flights f
               ON ad.airport_code = f.departure_airport AND ad.city ->> 'ru' = 'Екатеринбург'
          JOIN airports_data ad1
               ON ad1.airport_code = f.arrival_airport AND ad1.city ->> 'ru' = 'Москва'
-where f.status = 'Scheduled'
+where f.status IN ('Scheduled', 'On Time')
 ORDER BY f.scheduled_departure
 LIMIT 1;
 
 
 --13
-SELECT (SELECT MAX(tf.amount) FROM ticket_flights tf) AS most_expensive_ticket,
-       (SELECT MIN(tf.amount) FROM ticket_flights tf) AS cheapest_ticket;
+(SELECT * FROM bookings.ticket_flights
+ ORDER BY amount ASC, ticket_no ASC
+ LIMIT 1)
+UNION
+(SELECT * FROM bookings.ticket_flights
+ ORDER BY amount DESC, ticket_no DESC
+ LIMIT 1);
 
 --14
 CREATE TABLE bookings.Customers
 (
     id        SERIAL PRIMARY KEY,
-    firstName VARCHAR(255) NOT NULL,
-    lastName  VARCHAR(255) NOT NULL,
+    firstName VARCHAR(40)  NOT NULL,
+    lastName  VARCHAR(40)  NOT NULL,
     email     VARCHAR(255) NOT NULL UNIQUE,
     phone     VARCHAR(20)  NULL UNIQUE
 );
